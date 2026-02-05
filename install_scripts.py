@@ -1,4 +1,4 @@
-
+import shutil
 def install_tool(name):
     print(f"\n[!] Attempting to install {name}...")
     
