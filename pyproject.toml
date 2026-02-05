@@ -1,0 +1,15 @@
+[project]
+name = "focusassist"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "google-generativeai",
+    "ollama",
+    "Pillow",
+    "pytesseract",
+    "win11toast",
+    "python-dotenv",
+    "pywin32"
+]
