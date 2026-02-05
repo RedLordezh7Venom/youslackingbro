@@ -89,6 +89,22 @@ def analyze_offline(image, goal):
         ollama_proc = subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(5)
         
+        # Checking model presence
+        model_name = 'llama3.2:3b'
+        model_present = False
+        try:
+            models_list = ollama.list()
+            model_present = any(m.get('name', '').startswith(model_name) for m in models_list.get('models', []))
+        except:
+            pass
+
+        if not model_present:
+            print(f"Model {model_name} not found. Pulling...")
+            subprocess.run(["ollama", "pull", model_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            model_present = True
+        else:
+            print(f"Model {model_name} is already present.")
+        
         prompt = f"""
         You are a focus assistant. The user's goal is: "{goal}".
         Here is the text content visible on their screen:
