@@ -1,17 +1,20 @@
 import shutil
+import subprocess
+import os
+import sys
 def install_tool(name):
     print(f"\n[!] Attempting to install {name}...")
     
     if sys.platform == "win32":
         # Windows logic (winget)
         package_ids = {
-            "Tesseract OCR": "UB_Software.TesseractOCR",
+            "Tesseract OCR": "UB-Mannheim.TesseractOCR",
             "Ollama": "Ollama.Ollama"
         }
         pkg_id = package_ids.get(name)
         if not pkg_id: return False
         
-        cmd = ["winget", "install", "--id", pkg_id, "--silent", "--accept-package-agreements", "--accept-source-agreements"]
+        cmd = ["winget", "install", "-e","--id", pkg_id, "--silent", "--accept-package-agreements", "--accept-source-agreements"]
         print(f"Running: {' '.join(cmd)}")
         try:
             subprocess.run(cmd, check=True)
@@ -77,7 +80,21 @@ def check_requirements():
     }
     
     for bin_name, formal_name in tools.items():
+        if sys.platform.startswith("win") and bin_name == "tesseract":
+            if not os.path.exists(r"C:\Program Files\Tesseract-OCR\tesseract.exe"):
+                raise FileNotFoundError(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
+                print(f"\n[!] {formal_name} not found in PATH.")
+                choice = input(f"Would you like to try installing {formal_name} for {sys.platform}? (y/n): ").strip().lower()
+                if choice == 'y':
+                    install_tool(formal_name)
+            else:
+                print(f"[✓] {formal_name} is available.")
+        
         if not shutil.which(bin_name):
+            
+            if sys.platform.startswith("win") and bin_name == "tesseract":
+                continue
+
             print(f"\n[!] {formal_name} not found in PATH.")
             choice = input(f"Would you like to try installing {formal_name} for {sys.platform}? (y/n): ").strip().lower()
             if choice == 'y':
