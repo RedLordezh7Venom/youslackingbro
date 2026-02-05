@@ -5,12 +5,12 @@ import shutil
 
 def check_requirements():
     """Check if external tools are available."""
-    # Check Tesseract
+    # tesseract
     if not shutil.which("tesseract"):
         print("WARNING: 'tesseract' not found in PATH. Offline OCR will fail.")
         print("Please install Tesseract and add it to your PATH.")
     
-    # Check Ollama (only if offline, but good to warn)
+    # Ollama (only if offline, but good to warn)
     if not shutil.which("ollama"):
         print("NOTE: 'ollama' not found in PATH. Make sure it is running if using offline mode.")
 
@@ -35,14 +35,11 @@ def main():
 
     try:
         while True:
-            # Sleep first? Or scan immediately?
-            # User said "in 5 minutes, it scans". So sleep first.
             print("zzzz... (waiting 5 mins)")
             time.sleep(300) 
             
             print("Waking up! Scanning screen...")
             # Run the scanner in a separate process
-            # We use the current python executable
             subprocess.run([sys.executable, "scanner.py", "--goal", goal, "--mode", mode])
             
     except KeyboardInterrupt:
