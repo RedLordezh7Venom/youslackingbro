@@ -5,10 +5,58 @@ from PIL import ImageGrab
 import pytesseract
 import google.generativeai as genai
 import ollama
-from win11toast import toast
+import tkinter as tk
+from tkinter import font as tkfont
 from dotenv import load_dotenv
 
 load_dotenv()
+
+def show_fullscreen_alert(message):
+    """Shows a high-impact full-screen alert that blocks input until dismissed."""
+    root = tk.Tk()
+    root.attributes("-fullscreen", True)
+    root.attributes("-topmost", True)
+    root.configure(bg='#1a1a1a') # Modern dark background
+
+    # Fonts
+    title_font = tkfont.Font(family="Helvetica", size=56, weight="bold")
+    msg_font = tkfont.Font(family="Helvetica", size=26)
+    btn_font = tkfont.Font(family="Helvetica", size=20, weight="bold")
+    
+    # Center frame
+    frame = tk.Frame(root, bg='#1a1a1a')
+    frame.place(relx=0.5, rely=0.5, anchor='center')
+
+    # Accent line
+    tk.Frame(frame, height=4, width=400, bg='#ff4b2b').pack(pady=(0, 30))
+
+    # Warning Header
+    tk.Label(frame, text="STAY FOCUSED!", font=title_font, fg='#ff4b2b', bg='#1a1a1a').pack(pady=(0, 20))
+    
+    # AI Nudge Message
+    tk.Label(frame, text=message, font=msg_font, fg='#e0e0e0', bg='#1a1a1a', 
+             wraplength=900, justify="center").pack(pady=20)
+    
+    # Divider
+    tk.Frame(frame, height=1, width=200, bg='#333333').pack(pady=30)
+
+    # Dismiss behavior
+    def dismiss():
+        root.destroy()
+
+    # Premium Button
+    btn = tk.Button(frame, text="GOT IT, BACK TO WORK", command=dismiss, 
+                    font=btn_font, bg='#ff4b2b', fg='white', 
+                    padx=50, pady=20, borderwidth=0, 
+                    cursor="hand2", activebackground='#ff6a4d', activeforeground='white')
+    btn.pack(pady=20)
+
+    # Keyboard shortcuts
+    root.bind("<Escape>", lambda e: dismiss())
+    root.bind("<Return>", lambda e: dismiss())
+
+    root.mainloop()
+
 
 def capture_screen():
     try:
@@ -110,7 +158,8 @@ def main():
              pass
         else:
              # It's a nudge
-             toast("Focus Nudge 🔔", result, duration="long")
+             print(f"Distraction detected! Showing full screen alert.")
+             show_fullscreen_alert(result)
 
 if __name__ == "__main__":
     main()

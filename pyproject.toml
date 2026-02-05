@@ -9,7 +9,6 @@ dependencies = [
     "ollama",
     "Pillow",
     "pytesseract",
-    "win11toast",
     "python-dotenv",
     "pywin32"
 ]
