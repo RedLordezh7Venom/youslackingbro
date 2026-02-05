@@ -1,6 +1,9 @@
 import argparse
 import os
 import sys
+import subprocess
+import time
+import shutil
 from PIL import ImageGrab
 import pytesseract
 import google.generativeai as genai
@@ -71,11 +74,21 @@ def analyze_offline(image, goal):
     print("Running in OFFLINE mode (Ollama + Tesseract)...")
     try:
         # 1. OCR
+        
+        if sys.platform.startswith("win"):
+            default_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+            if not shutil.which("tesseract") and os.path.exists(default_path):
+                pytesseract.pytesseract.tesseract_cmd = default_path
+
         text = pytesseract.image_to_string(image)
         if not text.strip():
             text = "[No readable text found on screen]"
         
         # 2. Ollama
+        print("Starting Ollama service...")
+        ollama_proc = subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time.sleep(5)
+        
         prompt = f"""
         You are a focus assistant. The user's goal is: "{goal}".
         Here is the text content visible on their screen:
@@ -91,12 +104,23 @@ def analyze_offline(image, goal):
         If NO, reply with a SHORT, QUIRKY, SARCASTIC nudge to get them back to work.
         """
         
-        response = ollama.chat(model='llama3.2', messages=[
+        response = ollama.chat(model='llama3.2:3b', messages=[
             {'role': 'user', 'content': prompt},
         ])
         
-        return response['message']['content']
+        output = response['message']['content']
+        
+        print("Shutting down Ollama service...")
+        ollama_proc.terminate()
+        try:
+            ollama_proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            ollama_proc.kill()
+            
+        return output
     except Exception as e:
+        if 'ollama_proc' in locals():
+            ollama_proc.kill()
         return f"Error in offline analysis: {e}"
 
 def analyze_online(image, goal):
