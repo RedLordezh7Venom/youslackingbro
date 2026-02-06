@@ -84,7 +84,7 @@ def analyze_offline(image, goal):
         ollama_proc = subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(5)
         
-        model_name = 'qwen3-vl:2b'  # Lightweight vision model (~829MB)
+        model_name = 'qwen3-vl:2b'   
         print(f"Ensuring model {model_name} is present...")
         subprocess.run(["ollama", "pull", model_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
