@@ -5,6 +5,8 @@ a simple focus assist that actually works, both offline/ online to keep you focu
 
 ## setup
 
+Most of the dependencies are auto installed and u can skip to usage as is, still if any issues:
+
 1. **install dependencies**: `pip install .` (or `uv sync` if you're cool)
 2. **install tesseract**: [download here](https://github.com/UB-Mannheim/tesseract/wiki), add to PATH.
 3. **install ollama**: [download here](https://ollama.com/), run `ollama pull llama3.2` (or whatever model you want).
@@ -15,7 +17,7 @@ a simple focus assist that actually works, both offline/ online to keep you focu
 
 ## usage
 
-* **run it**: `python main.py`
+* **run it**: `uv run main.py`
 * **follow instructions**: tell it what you're doing.
 * **chill**: it runs in background.
 
