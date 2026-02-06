@@ -12,7 +12,7 @@ Most of the dependencies are auto installed and u can skip to usage as is, still
 3. **install ollama**: [download here](https://ollama.com/), run `ollama pull llama3.2` (or whatever model you want).
 4. **env vars**: make a `.env` file if you want online mode:
    ```env
-   GEMINI_API_KEY=your_key_here
+   GROQ_API_KEY=your_key_here
    ```
 
 ## usage
@@ -24,4 +24,4 @@ Most of the dependencies are auto installed and u can skip to usage as is, still
 ## modes
 
 * **offline**: uses local ollama + tesseract. private. free.
-* **online**: uses gemini api. faster. smarter.
+* **online**: uses groq api (llama-3.1-8b-instant). faster. smarter.

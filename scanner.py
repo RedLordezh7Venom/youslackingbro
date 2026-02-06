@@ -4,9 +4,11 @@ import sys
 import subprocess
 import time
 import shutil
+import io
+import base64
 from PIL import ImageGrab
 import pytesseract
-import google.genai as genai
+from groq import Groq
 import ollama
 import tkinter as tk
 from tkinter import font as tkfont
@@ -71,57 +73,41 @@ def capture_screen():
         return None
 
 def analyze_offline(image, goal):
-    print("Running in OFFLINE mode (Ollama + Tesseract)...")
+    print("Running in OFFLINE mode (Ollama Vision)...")
     try:
-        # 1. OCR
-        
-        if sys.platform.startswith("win"):
-            default_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-            if not shutil.which("tesseract") and os.path.exists(default_path):
-                pytesseract.pytesseract.tesseract_cmd = default_path
+        # Convert PIL image to bytes for Ollama
+        img_byte_arr = io.BytesIO()
+        image.save(img_byte_arr, format='PNG')
+        img_bytes = img_byte_arr.getvalue()
 
-        text = pytesseract.image_to_string(image)
-        if not text.strip():
-            text = "[No readable text found on screen]"
-        
         # 2. Ollama
         print("Starting Ollama service...")
         ollama_proc = subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(5)
         
-        # Checking model presence
-        model_name = 'llama3.2:3b'
-        model_present = False
-        try:
-            models_list = ollama.list()
-            model_present = any(m.get('name', '').startswith(model_name) for m in models_list.get('models', []))
-        except:
-            pass
-
-        if not model_present:
-            print(f"Model {model_name} not found. Pulling...")
-            subprocess.run(["ollama", "pull", model_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            model_present = True
-        else:
-            print(f"Model {model_name} is already present.")
+        model_name = 'qwen3-vl:2b'  # Lightweight vision model (~829MB)
+        print(f"Ensuring model {model_name} is present...")
+        subprocess.run(["ollama", "pull", model_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
         prompt = f"""
-        You are a focus assistant. The user's goal is: "{goal}".
-        Here is the text content visible on their screen:
+        USER GOAL: "{goal}"
         
-        ---
-        {text[:2000]} 
-        ---
+        Look at this screenshot. 
+        DETERMINE: Is the user actually working on the specific goal?
         
-        (Text truncated to 2000 chars for speed)
-        
-        Is the user working on their goal? 
-        If YES, reply with "FOCUSED".
-        If NO, reply with a SHORT, QUIRKY, SARCASTIC nudge to get them back to work.
+        RULES:
+        1. If they are working on the goal, reply with ONLY the word "FOCUSED".
+        2. If NOT related, roast them with a biting, clever, and sarcastic nudge (max 20 words).
+        3. TONE: Be condescending and witty. 
+        4. NEVER explain your reasoning. NEVER say the word "DISTRACTION".
         """
         
-        response = ollama.chat(model='llama3.2:3b', messages=[
-            {'role': 'user', 'content': prompt},
+        response = ollama.chat(model=model_name, messages=[
+            {
+                'role': 'user', 
+                'content': prompt,
+                'images': [img_bytes]
+            },
         ])
         
         output = response['message']['content']
@@ -140,47 +126,56 @@ def analyze_offline(image, goal):
         return f"Error in offline analysis: {e}"
 
 def analyze_online(image, goal):
-    print("Running in ONLINE mode (Gemini)...")
-    api_key = os.getenv("GEMINI_API_KEY")
+    print("Running in ONLINE mode (Groq Vision)...")
+    api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
-        return "Error: GEMINI_API_KEY not found in .env"
+        return "Error: GROQ_API_KEY not found in .env"
 
     try:
+        # 1. Convert PIL image to base64
+        buffered = io.BytesIO()
+        image.save(buffered, format="PNG")
+        base64_image = base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-        #OCR
-        if sys.platform.startswith("win"):
-            default_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-            if not shutil.which("tesseract") and os.path.exists(default_path):
-                pytesseract.pytesseract.tesseract_cmd = default_path
-
-        text = pytesseract.image_to_string(image)
-        #
-        if not text.strip():
-            text = "[No readable text found on screen]"
-        
-        client = genai.Client(api_key=api_key)
-        
-        for model in client.models.list():
-            print(model.name)  # Lists like 'gemma-2-2b-it', 'gemini-2.5-flash'
+        client = Groq(api_key=api_key)
         
         prompt = f"""
-        The user's declared goal is: "{goal}".
-        Look at this screenshot of their desktop.
-        The text content visible on their screen is:
-        ---
-        {text[:1000]} 
-        ---
+        You are a WITTY, HARSH, and HIGHLY SARCASTIC Productivity Coach. 
+        Your job is to roast the user for being distracted.
         
-        Are they working on it?
-        If yes, just say "FOCUSED".
-        If no, write a SHORT, QUIRKY, SARCASTIC nudge to get them back to work.
+        USER GOAL: "{goal}"
+        
+        Look at this screenshot of the user's desktop.
+        DETERMINE: Is the user actually working on the specific goal?
+        
+        STRICT RULES:
+        1. Identify the application or website in the foreground.
+        2. If the PRIMARY content is related to the goal, reply with ONLY the word "FOCUSED".
+        3. Ignore background windows or taskbars.
+        4. If the MAIN activity is clearly NOT related, roast them with a biting, clever, and sarcastic nudge (max 20 words).
+        5. TONE: Be sharp and condescending.
+        6. NEVER provide extra commentary. NEVER say the word "DISTRACTION".
+        7. If it is a NUDGE, DO NOT use the word FOCUS or FOCUSED.
         """
         
-        response = client.models.generate_content(
-            model="gemma-3-27b-it",
-            contents=[prompt],
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{base64_image}",
+                            },
+                        },
+                    ],
+                }
+            ],
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
         )
-        return response.text
+        return chat_completion.choices[0].message.content
     except Exception as e:
         return f"Error in online analysis: {e}"
 
