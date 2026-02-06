@@ -8,9 +8,8 @@ a simple focus assist that actually works, both offline/ online to keep you focu
 Most of the dependencies are auto installed and u can skip to usage as is, still if any issues:
 
 1. **install dependencies**: `pip install .` (or `uv sync` if you're cool)
-2. **install tesseract**: [download here](https://github.com/UB-Mannheim/tesseract/wiki), add to PATH.
-3. **install ollama**: [download here](https://ollama.com/), run `ollama pull llama3.2` (or whatever model you want).
-4. **env vars**: make a `.env` file if you want online mode:
+2. **install ollama**: [download here](https://ollama.com/), run `ollama pull qwen3-vl:2b`.
+3. **env vars**: make a `.env` file if you want online mode:
    ```env
    GROQ_API_KEY=your_key_here
    ```
@@ -23,5 +22,5 @@ Most of the dependencies are auto installed and u can skip to usage as is, still
 
 ## modes
 
-* **offline**: uses local ollama + tesseract. private. free.
-* **online**: uses groq api (llama-3.1-8b-instant). faster. smarter.
+* **offline**: uses local ollama (qwen3-vl:2b). direct screen analysis. private. free.
+* **online**: uses groq api (llama-4-scout-vision). multimodal analysis. super fast.

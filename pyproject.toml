@@ -8,7 +8,6 @@ dependencies = [
     "groq",
     "ollama",
     "Pillow",
-    "pytesseract",
     "python-dotenv",
     "pywin32"
 ]

@@ -2,19 +2,19 @@ import shutil
 import subprocess
 import os
 import sys
+
 def install_tool(name):
     print(f"\n[!] Attempting to install {name}...")
     
     if sys.platform == "win32":
         # Windows logic (winget)
         package_ids = {
-            "Tesseract OCR": "UB-Mannheim.TesseractOCR",
             "Ollama": "Ollama.Ollama"
         }
         pkg_id = package_ids.get(name)
         if not pkg_id: return False
         
-        cmd = ["winget", "install", "-e","--id", pkg_id, "--silent", "--accept-package-agreements", "--accept-source-agreements"]
+        cmd = ["winget", "install", "-e", "--id", pkg_id, "--silent", "--accept-package-agreements", "--accept-source-agreements"]
         print(f"Running: {' '.join(cmd)}")
         try:
             subprocess.run(cmd, check=True)
@@ -31,7 +31,6 @@ def install_tool(name):
             return False
         
         cmds = {
-            "Tesseract OCR": ["brew", "install", "tesseract"],
             "Ollama": ["brew", "install", "--cask", "ollama"]
         }
         cmd = cmds.get(name)
@@ -46,26 +45,14 @@ def install_tool(name):
     elif sys.platform == "linux":
         # Linux logic with package manager detection
         try:
-            if name == "Tesseract OCR":
-                if shutil.which("apt-get"):
-                    print("Detected Debian/Ubuntu (apt)")
-                    subprocess.run(["sudo", "apt-get", "update"], check=True)
-                    subprocess.run(["sudo", "apt-get", "install", "-y", "tesseract-ocr"], check=True)
-                elif shutil.which("pacman"):
-                    print("Detected Arch Linux (pacman)")
-                    subprocess.run(["sudo", "pacman", "-Sy", "--noconfirm", "tesseract"], check=True)
-                elif shutil.which("dnf"):
-                    print("Detected Fedora/RHEL (dnf)")
-                    subprocess.run(["sudo", "dnf", "install", "-y", "tesseract"], check=True)
-                else:
-                    print("Error: Could not determine package manager. Please install Tesseract manually.")
-                    return False
-            elif name == "Ollama":
+            if name == "Ollama":
                 print("Running official Ollama installer: curl -fsSL https://ollama.com/install.sh | sh")
                 subprocess.run("curl -fsSL https://ollama.com/install.sh | sh", shell=True, check=True)
-            
-            print(f"Successfully installed {name}!")
-            return True
+                print(f"Successfully installed {name}!")
+                return True
+            else:
+                print(f"No installation logic for {name} on Linux.")
+                return False
         except Exception as e:
             print(f"Failed to install {name}: {e}")
             return False
@@ -75,26 +62,11 @@ def install_tool(name):
 def check_requirements():
     """Check if external tools are available and offer to install them based on OS."""
     tools = {
-        "tesseract": "Tesseract OCR",
         "ollama": "Ollama"
     }
     
     for bin_name, formal_name in tools.items():
-        if sys.platform.startswith("win") and bin_name == "tesseract":
-            if not os.path.exists(r"C:\Program Files\Tesseract-OCR\tesseract.exe"):
-                raise FileNotFoundError(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
-                print(f"\n[!] {formal_name} not found in PATH.")
-                choice = input(f"Would you like to try installing {formal_name} for {sys.platform}? (y/n): ").strip().lower()
-                if choice == 'y':
-                    install_tool(formal_name)
-            else:
-                print(f"[✓] {formal_name} is available.")
-        
         if not shutil.which(bin_name):
-            
-            if sys.platform.startswith("win") and bin_name == "tesseract":
-                continue
-
             print(f"\n[!] {formal_name} not found in PATH.")
             choice = input(f"Would you like to try installing {formal_name} for {sys.platform}? (y/n): ").strip().lower()
             if choice == 'y':

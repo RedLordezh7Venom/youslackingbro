@@ -7,7 +7,6 @@ import shutil
 import io
 import base64
 from PIL import ImageGrab
-import pytesseract
 from groq import Groq
 import ollama
 import tkinter as tk
