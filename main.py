@@ -25,7 +25,7 @@ def main():
     try:
         while True:
             print("zzzz... (waiting 5 mins)")
-            time.sleep(30) 
+            time.sleep(10) 
             
             print("Waking up! Scanning screen...")
             # Run the scanner in a separate process

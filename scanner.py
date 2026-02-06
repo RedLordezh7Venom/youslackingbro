@@ -6,7 +6,7 @@ import time
 import shutil
 from PIL import ImageGrab
 import pytesseract
-import google.generativeai as genai
+import google.genai as genai
 import ollama
 import tkinter as tk
 from tkinter import font as tkfont
@@ -146,18 +146,40 @@ def analyze_online(image, goal):
         return "Error: GEMINI_API_KEY not found in .env"
 
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+
+        #OCR
+        if sys.platform.startswith("win"):
+            default_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+            if not shutil.which("tesseract") and os.path.exists(default_path):
+                pytesseract.pytesseract.tesseract_cmd = default_path
+
+        text = pytesseract.image_to_string(image)
+        #
+        if not text.strip():
+            text = "[No readable text found on screen]"
+        
+        client = genai.Client(api_key=api_key)
+        
+        for model in client.models.list():
+            print(model.name)  # Lists like 'gemma-2-2b-it', 'gemini-2.5-flash'
         
         prompt = f"""
         The user's declared goal is: "{goal}".
         Look at this screenshot of their desktop.
+        The text content visible on their screen is:
+        ---
+        {text[:1000]} 
+        ---
+        
         Are they working on it?
         If yes, just say "FOCUSED".
         If no, write a SHORT, QUIRKY, SARCASTIC nudge to get them back to work.
         """
         
-        response = model.generate_content([prompt, image])
+        response = client.models.generate_content(
+            model="gemma-3-27b-it",
+            contents=[prompt],
+        )
         return response.text
     except Exception as e:
         return f"Error in online analysis: {e}"
