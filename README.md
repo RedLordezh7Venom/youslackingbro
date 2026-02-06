@@ -1,4 +1,4 @@
-# youlackingbro
+# youslackingbro
 
 a simple focus assist that actually works, both offline/ online to keep you focused.
 **tl;dr**: keeps you focused. runs every 5 mins. yells at you if you slack off.
