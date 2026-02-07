@@ -173,6 +173,8 @@ def analyze_online(image, goal):
                 }
             ],
             model="meta-llama/llama-4-scout-17b-16e-instruct",
+	    temperature = 0.3,
+  	    top_p = 1
         )
         return chat_completion.choices[0].message.content
     except Exception as e:
