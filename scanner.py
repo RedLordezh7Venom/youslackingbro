@@ -79,7 +79,7 @@ def analyze_offline(image, goal):
         image.save(img_byte_arr, format='PNG')
         img_bytes = img_byte_arr.getvalue()
 
-        # 2. Ollama
+        # 2. Ollama -> replace with llamafile (gguf converted)
         print("Starting Ollama service...")
         ollama_proc = subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(5)
